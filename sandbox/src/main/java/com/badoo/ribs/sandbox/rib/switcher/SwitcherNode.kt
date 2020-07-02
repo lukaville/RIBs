@@ -5,8 +5,8 @@ import android.view.ViewGroup
 import com.badoo.ribs.core.Node
 import com.badoo.ribs.core.modality.BuildParams
 import com.badoo.ribs.core.plugin.Plugin
-import com.badoo.ribs.routing.source.backstack.BackStackFeature
-import com.badoo.ribs.routing.source.backstack.operation.push
+import com.badoo.ribs.routing.source.tabcontroller.TabController
+import com.badoo.ribs.routing.source.tabcontroller.operation.setActive
 import com.badoo.ribs.sandbox.rib.dialog_example.DialogExample
 import com.badoo.ribs.sandbox.rib.foo_bar.FooBar
 import com.badoo.ribs.sandbox.rib.hello_world.HelloWorld
@@ -18,7 +18,7 @@ class SwitcherNode internal constructor(
     buildParams: BuildParams<*>,
     viewFactory: ((ViewGroup) -> SwitcherView?)?,
     plugins: List<Plugin>,
-    private val backStack: BackStackFeature<Configuration>
+    private val tabController: TabController<Configuration>
 ) : Node<SwitcherView>(
     buildParams = buildParams,
     viewFactory = viewFactory,
@@ -28,19 +28,19 @@ class SwitcherNode internal constructor(
     override fun attachHelloWorld(): Single<HelloWorld> =
         attachWorkflow {
             Log.d("WORKFLOW", "Switcher / attachHelloWorld")
-            backStack.push(Content.Hello)
+            tabController.setActive(Content.Hello)
         }
 
     override fun attachDialogExample(): Single<DialogExample> =
         attachWorkflow {
             Log.d("WORKFLOW", "Switcher / attachDialogExample")
-            backStack.push(Content.DialogsExample)
+            tabController.setActive(Content.DialogsExample)
         }
 
     override fun attachFooBar(): Single<FooBar> =
         attachWorkflow {
             Log.d("WORKFLOW", "Switcher / attachFooBar")
-            backStack.push(Content.Foo)
+            tabController.setActive(Content.Foo)
         }
 
     override fun waitForHelloWorld(): Single<HelloWorld> =
