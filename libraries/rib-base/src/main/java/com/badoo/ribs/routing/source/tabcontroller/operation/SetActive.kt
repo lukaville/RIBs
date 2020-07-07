@@ -20,7 +20,7 @@ class SetActive<C : Parcelable>(
         val theRestDeactivated = theRest.map { it.copy(activation = INACTIVE) }
 
         return state.copy(
-            previous = state.current,
+            history = state.history + listOf(state.current),
             current = (theRestDeactivated + targetActivated).toSet()
         )
     }

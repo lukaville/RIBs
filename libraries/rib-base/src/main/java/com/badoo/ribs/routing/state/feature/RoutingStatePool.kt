@@ -2,6 +2,7 @@ package com.badoo.ribs.routing.state.feature
 
 import android.os.Parcelable
 import com.badoo.mvicore.element.Bootstrapper
+import com.badoo.mvicore.element.NewsPublisher
 import com.badoo.mvicore.element.Reducer
 import com.badoo.mvicore.element.TimeCapsule
 import com.badoo.mvicore.feature.ActorReducerFeature
@@ -22,6 +23,7 @@ import com.badoo.ribs.routing.state.feature.state.SavedState
 import com.badoo.ribs.routing.state.feature.state.WorkingState
 import com.badoo.ribs.routing.transition.handler.TransitionHandler
 import com.badoo.ribs.routing.state.changeset.TransitionDescriptor
+import com.badoo.ribs.routing.state.feature.RoutingStatePool.News
 import io.reactivex.Observable
 
 private val timeCapsuleKey = RoutingStatePool::class.java.name
@@ -53,7 +55,7 @@ internal class RoutingStatePool<C : Parcelable>(
     activator: RoutingActivator<C>,
     parentNode: Node<*>,
     transitionHandler: TransitionHandler<C>?
-) : ActorReducerFeature<Transaction<C>, Effect<C>, WorkingState<C>, Nothing>(
+) : ActorReducerFeature<Transaction<C>, Effect<C>, WorkingState<C>, News>(
     initialState = timeCapsule.initialState<C>(),
     bootstrapper = BootStrapperImpl(timeCapsule.initialState<C>()),
     actor = Actor(
@@ -62,7 +64,8 @@ internal class RoutingStatePool<C : Parcelable>(
         parentNode = parentNode,
         transitionHandler = transitionHandler
     ),
-    reducer = ReducerImpl()
+    reducer = ReducerImpl(),
+    newsPublisher = NewsPublisherImpl()
 ) {
     init {
         timeCapsule.register(timeCapsuleKey) { state.toSavedState() }
@@ -124,6 +127,15 @@ internal class RoutingStatePool<C : Parcelable>(
         data class TransitionFinished<C : Parcelable>(
             val transition: OngoingTransition<C>
         ) : Effect<C>()
+    }
+
+    sealed class News {
+        object TransitionFinished: News()
+    }
+
+    class NewsPublisherImpl : NewsPublisher<Any, Effect<*>, Any, News> {
+        override fun invoke(action: Any, effect: Effect<*>, state: Any): News? =
+            if (effect is Effect.TransitionFinished) News.TransitionFinished else null
     }
 
     class BootStrapperImpl<C : Parcelable>(

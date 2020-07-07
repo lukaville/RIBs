@@ -11,7 +11,7 @@ class Remove<C : Parcelable>(
         state.any { it.routing.configuration == configuration }
 
     override fun invoke(state: State<C>): State<C> = state.copy(
-        previous = state.current,
+        history = state.history + listOf(state.current),
         current = state.current - state.find { it.routing.configuration == configuration }!!
     )
 }

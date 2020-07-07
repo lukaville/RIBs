@@ -12,7 +12,7 @@ class RemoveById<C : Parcelable>(
         state.any { it.routing.identifier == identifier }
 
     override fun invoke(state: State<C>): State<C> = state.copy(
-        previous = state.current,
+        history = state.history + listOf(state.current),
         current = state.current - state.find { it.routing.identifier == identifier }!!
     )
 }

@@ -14,7 +14,7 @@ class Add<C : Parcelable>(
 
     override fun invoke(state: State<C>): State<C> =
         state.copy(
-            previous = state.current,
+            history = state.history + listOf(state.current), // limit 1
             current = state.current + RoutingHistoryElement(
                 routing = Routing(
                     configuration = configuration,

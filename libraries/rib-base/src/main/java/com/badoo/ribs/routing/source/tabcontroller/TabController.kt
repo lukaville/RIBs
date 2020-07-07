@@ -2,6 +2,7 @@ package com.badoo.ribs.routing.source.tabcontroller
 
 import android.os.Bundle
 import android.os.Parcelable
+import android.util.Log
 import com.badoo.mvicore.android.AndroidTimeCapsule
 import com.badoo.mvicore.element.Bootstrapper
 import com.badoo.mvicore.element.Reducer
@@ -14,6 +15,7 @@ import com.badoo.ribs.routing.history.RoutingHistory
 import com.badoo.ribs.routing.history.RoutingHistoryElement
 import com.badoo.ribs.routing.history.RoutingHistoryElement.Activation.ACTIVE
 import com.badoo.ribs.routing.source.RoutingSource
+import com.badoo.ribs.routing.source.tabcontroller.operation.Drop
 import com.badoo.ribs.routing.source.tabcontroller.operation.Init
 import com.badoo.ribs.routing.source.tabcontroller.operation.Operation
 import com.badoo.ribs.routing.source.tabcontroller.operation.RemoveById
@@ -127,6 +129,7 @@ class TabController<C : Parcelable> internal constructor(
     ) : Reducer<State<C>, Operation<C>> {
         override fun invoke(state: State<C>, effect: Operation<C>): State<C> {
             if (effect.isApplicable(state)) {
+                Log.d("TabController", "Effect is applicable: $effect")
                 val applied = effect.invoke(state)
                 val withCorrectIds = applied.current
                     .map { element ->
@@ -137,9 +140,14 @@ class TabController<C : Parcelable> internal constructor(
                         )
                     }.toSet()
 
-                return applied.copy(
+                val newState = applied.copy(
                     current = withCorrectIds
                 )
+
+                Log.d("TabController", "old state: $state")
+                Log.d("TabController", "new state: $newState")
+
+                return newState
             }
 
             return state
@@ -149,10 +157,16 @@ class TabController<C : Parcelable> internal constructor(
     override fun handleBackPressFallback(): Boolean {
         if (Revert<C>().isApplicable(state)) {
             accept(Revert())
+//            accept(Drop())
             return true
         }
 
         return false
+    }
+
+    override fun onTransitionFinished() {
+        Log.d("TabController", "onTransitionFinished")
+        accept(Drop())
     }
 
     override fun remove(identifier: Routing.Identifier) {
@@ -168,7 +182,9 @@ class TabController<C : Parcelable> internal constructor(
     }
 
     override fun subscribe(observer: Observer<in RoutingHistory<C>>) =
-        feature.subscribe(observer)
+        Observable.wrap(feature)
+            .map { RoutingHistory.from(it.current) }
+            .subscribe(observer)
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
